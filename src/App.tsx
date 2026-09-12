@@ -12,6 +12,8 @@ import { ApproachSection } from './components/sections/ApproachSection';
 import { ContactSection } from './components/sections/ContactSection';
 import { Footer } from './components/layout/Footer';
 import { Scene } from './components/3d/Scene';
+import { FloatingDock } from './components/ui/FloatingDock';
+import { PointerFollower } from './components/ui/PointerFollower';
 
 import { ScrollTrigger } from './lib/gsap';
 
@@ -33,6 +35,9 @@ export function App() {
       {/* Intro Loader */}
       {loading && <Loader onComplete={handleLoaderComplete} />}
 
+      {/* Interactive Lightswind Custom Arrow Pointer */}
+      {!loading && <PointerFollower />}
+
       {/* Subtle Background 3D Atmosphere */}
       <Scene />
 
@@ -44,12 +49,15 @@ export function App() {
         <Hero isReady={!loading} />
         <AboutSection />
         <SkillsSection />
-        <JourneySection />
+        <JourneySection isReady={!loading} />
         <ProjectsSection />
         <ExperienceSection />
         <ApproachSection />
         <ContactSection />
       </main>
+
+      {/* Interactive Lightswind Floating Navigation Dock */}
+      {!loading && <FloatingDock />}
 
       {/* Footer */}
       <Footer />

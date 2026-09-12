@@ -13,7 +13,7 @@ export const ProjectDeviceMockup: React.FC<ProjectDeviceMockupProps> = ({ projec
   const imageSrc = `/images/${projectId}.webp`;
 
   return (
-    <div className="relative w-full max-w-[340px] sm:max-w-[400px] lg:max-w-[440px] aspect-[9/16] sm:aspect-[4/5] mx-auto flex items-center justify-center will-change-transform group">
+    <div className="relative w-full max-w-[min(100%,280px)] sm:max-w-[340px] lg:max-w-[380px] xl:max-w-[420px] aspect-[9/16] sm:aspect-[4/5] mx-auto flex items-center justify-center will-change-transform group">
       {/* Dynamic Ambient Aura */}
       <div
         className="absolute -inset-6 rounded-[2.5rem] blur-3xl opacity-20 pointer-events-none -z-10 transition-opacity duration-500 group-hover:opacity-35"

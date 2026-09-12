@@ -1,9 +1,13 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { CONTACT_CONTENT, PERSONAL_INFO } from '../../data/portfolio';
-import { ArrowUpRight, Sparkles, MapPin, CheckCircle2 } from 'lucide-react';
+import { ArrowUpRight, MapPin, Copy, Check } from 'lucide-react';
+import { SpotlightCard } from '../ui/SpotlightCard';
+import { BorderBeam } from '../ui/BorderBeam';
+import { ShimmerButton } from '../ui/ShimmerButton';
 import { gsap } from '../../lib/gsap';
 
 export const ContactSection: React.FC = () => {
+  const [copied, setCopied] = useState(false);
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const line1Ref = useRef<HTMLSpanElement | null>(null);
@@ -101,108 +105,134 @@ export const ContactSection: React.FC = () => {
     <section
       ref={sectionRef}
       id="contact"
-      className="relative py-32 sm:py-44 px-6 sm:px-8 lg:px-12 max-w-7xl mx-auto border-t border-white/[0.06] overflow-hidden"
+      className="editorial-section"
     >
-      {/* Background Watermark Index */}
-      <div className="absolute top-12 right-6 lg:right-12 text-[100px] sm:text-[140px] font-black font-display text-white/[0.015] select-none pointer-events-none -z-10 leading-none">
-        08
-      </div>
-
-      {/* Dynamic Ambient Background Glow */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-emerald-500/[0.04] rounded-full blur-3xl pointer-events-none -z-10" />
-
-      {/* Top Header */}
-      <div
-        ref={headerRef}
-        className="flex items-center justify-between text-xs font-mono text-[#8A8A8A] tracking-widest uppercase mb-16 sm:mb-20 border-b border-white/[0.06] pb-4"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-emerald-400 font-bold">08 //</span>
-          <span>INITIATE CONTACT</span>
-        </div>
-        <div className="flex items-center gap-2 text-emerald-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[11px]">OPEN TO OPPORTUNITIES</span>
-        </div>
-      </div>
-
-      {/* Main Closing Editorial Statement */}
-      <div className="max-w-4xl">
-        <div className="space-y-1 mb-8">
-          <div className="overflow-hidden">
-            <span
-              ref={line1Ref}
-              className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black font-display text-white tracking-tight uppercase leading-[0.9] will-change-transform"
-            >
-              LET'S BUILD
-            </span>
-          </div>
-
-          <div className="overflow-hidden">
-            <span
-              ref={line2Ref}
-              className="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black font-display text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-white to-white/60 tracking-tight uppercase leading-[0.9] will-change-transform"
-            >
-              SOMETHING MEANINGFUL.
-            </span>
-          </div>
-        </div>
-
-        {/* Supporting Copy */}
-        <p
-          ref={descRef}
-          className="text-base sm:text-xl text-[#A3A3A3] font-light leading-relaxed max-w-2xl mb-12"
-        >
-          {CONTACT_CONTENT.subtext}
-        </p>
-
-        {/* Contact Action Card */}
+      <div className="editorial-container">
+        {/* Standard Editorial Section Header */}
         <div
-          ref={ctaCardRef}
-          className="p-8 sm:p-10 rounded-2xl bg-[#080808] border border-white/[0.08] mb-12 flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden shadow-2xl"
+          ref={headerRef}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 lg:mb-20 pb-6 border-b border-white/[0.08] gap-4"
         >
           <div>
-            <div className="text-xs font-mono text-emerald-400 mb-2 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>DIRECT PROFESSIONAL NETWORK</span>
+            <div className="flex items-center gap-2.5 text-xs font-mono text-[#8A8A8A] tracking-[0.2em] uppercase mb-3">
+              <span className="text-emerald-400 font-bold">08 //</span>
+              <span>ENGAGEMENT</span>
             </div>
-            <div className="text-lg sm:text-xl font-bold font-display text-white mb-1">
-              Muhammad Ahmed
-            </div>
-            <div className="text-xs font-mono text-[#8A8A8A]">
-              Software Engineer · Mobile & Full-Stack Developer
-            </div>
+
+            <h2 className="text-[clamp(1.85rem,5vw,3.75rem)] font-black font-display text-white tracking-tight uppercase leading-[0.92]">
+              INITIATE
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40">
+                CONTACT
+              </span>
+            </h2>
           </div>
 
-          {/* Magnetic CTA Button */}
-          <a
-            ref={magneticButtonRef}
-            href={CONTACT_CONTENT.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-full bg-white text-black font-semibold text-xs sm:text-sm font-mono tracking-widest hover:bg-emerald-400 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] cursor-pointer shrink-0 will-change-transform"
-          >
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.25c-.96 0-1.74.78-1.74 1.74 0 .97.78 1.74 1.74 1.74.96 0 1.74-.77 1.74-1.74 0-.96-.78-1.74-1.74-1.74Z" />
-            </svg>
-            <span>CONNECT ON LINKEDIN</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </a>
+          <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="tracking-wider uppercase text-[11px]">OPEN TO OPPORTUNITIES</span>
+          </div>
         </div>
 
-        {/* Telemetry Status Row */}
-        <div
-          ref={metaBarRef}
-          className="flex flex-wrap items-center gap-6 sm:gap-8 text-xs font-mono text-[#737373] pt-4"
-        >
-          <div className="flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{PERSONAL_INFO.location} (UTC+5)</span>
+        {/* Main Closing Editorial Statement */}
+        <div className="max-w-4xl">
+          <div className="space-y-1 mb-8">
+            <div className="overflow-hidden">
+              <span
+                ref={line1Ref}
+                className="block text-[clamp(1.85rem,6.5vw,5.5rem)] font-black font-display text-white tracking-tight uppercase leading-[0.9] break-words will-change-transform"
+              >
+                LET'S BUILD
+              </span>
+            </div>
+
+            <div className="overflow-hidden">
+              <span
+                ref={line2Ref}
+                className="block text-[clamp(1.85rem,6.5vw,5.5rem)] font-black font-display text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-white to-white/60 tracking-tight uppercase leading-[0.9] break-words will-change-transform"
+              >
+                SOMETHING MEANINGFUL.
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span>AUTHENTIC PORTFOLIO SPECIFICATION</span>
+          {/* Supporting Copy */}
+          <p
+            ref={descRef}
+            className="text-base sm:text-lg md:text-xl text-[#A3A3A3] font-light leading-relaxed max-w-2xl mb-8 sm:mb-12"
+          >
+            {CONTACT_CONTENT.subtext}
+          </p>
+
+          {/* Contact Action Card */}
+          <div ref={ctaCardRef} className="mb-10">
+            <SpotlightCard
+              enableTilt={true}
+              spotlightColor="rgba(16, 185, 129, 0.2)"
+              className="p-5 sm:p-8 lg:p-10 rounded-2xl bg-[#080808]/90 border border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden shadow-2xl"
+            >
+              <BorderBeam duration={10} colorFrom="#10b981" colorTo="#38bdf8" />
+              <div>
+                <div className="text-lg sm:text-xl font-bold font-display text-white mb-1 flex items-center gap-2">
+                  <span>Muhammad Ahmed</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+                <div className="text-xs font-mono text-[#8A8A8A] mb-3">
+                  Software Engineer · Mobile & Full-Stack Developer
+                </div>
+                <div className="text-xs font-mono text-white/50 tracking-wider">
+                  {PERSONAL_INFO.socialLinks.email || 'muhammadahmedstack@gmail.com'}
+                </div>
+              </div>
+
+              {/* Action Buttons: Copy Email + LinkedIn */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const email = PERSONAL_INFO.socialLinks.email || 'muhammadahmedstack@gmail.com';
+                    navigator.clipboard.writeText(email);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-3.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-mono tracking-wider text-white transition-all cursor-pointer active:scale-95 touch-manipulation"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-400 font-semibold">EMAIL COPIED!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-[#8A8A8A]" />
+                      <span>COPY EMAIL</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Magnetic CTA Button */}
+                <ShimmerButton
+                  href={CONTACT_CONTENT.linkedin}
+                  variant="primary"
+                  className="w-full sm:w-auto justify-center"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.25c-.96 0-1.74.78-1.74 1.74 0 .97.78 1.74 1.74 1.74.96 0 1.74-.77 1.74-1.74 0-.96-.78-1.74-1.74-1.74Z" />
+                  </svg>
+                  <span>CONNECT ON LINKEDIN</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </ShimmerButton>
+              </div>
+            </SpotlightCard>
+          </div>
+
+          {/* Clean Location Row */}
+          <div
+            ref={metaBarRef}
+            className="flex items-center gap-2 text-xs font-mono text-[#737373]"
+          >
+            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{PERSONAL_INFO.location} (UTC+5)</span>
           </div>
         </div>
       </div>

@@ -1,7 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { ArrowDown, ArrowRight, Sparkles, Terminal } from 'lucide-react';
+import { ArrowDown, ArrowRight } from 'lucide-react';
 import { HERO_CONTENT } from '../../data/portfolio';
 import { HeroPortrait, type HeroPortraitHandle } from './HeroPortrait';
+import { ShimmerButton } from '../ui/ShimmerButton';
+import { LiveClockBadge } from '../ui/LiveClockBadge';
 import { gsap, ScrollTrigger } from '../../lib/gsap';
 
 interface HeroProps {
@@ -142,6 +144,7 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
             filter: 'blur(0px)',
             duration: 1.2,
             ease: 'power2.out',
+            clearProps: 'filter',
           },
           '-=0.9'
         )
@@ -159,7 +162,7 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
     return () => ctx.revert();
   }, [isReady]);
 
-  // 2. Scroll Choreography & Pinned Turntable Scrub
+  // 2. Scroll Choreography & Pinned Turntable Scrub with gsap.matchMedia
   useEffect(() => {
     const wrapper = pinnedWrapperRef.current;
     if (!wrapper || !isReady) return;
@@ -167,58 +170,65 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
-    const isDesktop = window.innerWidth >= 1024;
+    const mm = gsap.matchMedia();
 
-    const ctx = gsap.context(() => {
-      // Desktop gets intentional pinned scrub; mobile gets in-flow smooth scrub
-      ScrollTrigger.create({
-        trigger: wrapper,
-        start: 'top top',
-        end: isDesktop ? '+=120%' : '+=80%',
-        pin: isDesktop,
-        pinSpacing: isDesktop,
-        anticipatePin: 1,
-        scrub: 0.5,
-        onUpdate: (self) => {
-          const p = self.progress;
+    mm.add(
+      {
+        isDesktop: '(min-width: 1024px)',
+        isMobile: '(max-width: 1023px)',
+      },
+      (context) => {
+        const { isDesktop } = context.conditions as { isDesktop: boolean; isMobile: boolean };
 
-          // A. Drive portrait canvas image sequence & 360° telemetry angle directly via ref
-          if (portraitRef.current) {
-            portraitRef.current.updateProgress(p);
-          }
+        ScrollTrigger.create({
+          trigger: wrapper,
+          start: 'top top',
+          end: isDesktop ? '+=120%' : '+=75%',
+          pin: isDesktop,
+          pinSpacing: isDesktop,
+          anticipatePin: 1,
+          scrub: 0.5,
+          onUpdate: (self) => {
+            const p = self.progress;
 
-          // B. Transform typography with subtle cinematic depth
-          if (textContainerRef.current) {
-            gsap.set(textContainerRef.current, {
-              y: -p * 50,
-              opacity: Math.max(0.2, 1 - p * 0.8),
-            });
-          }
+            // A. Drive portrait canvas image sequence & 360° telemetry angle directly via ref
+            if (portraitRef.current) {
+              portraitRef.current.updateProgress(p);
+            }
 
-          // C. Fade out top and bottom telemetry as user scrolls into the narrative
-          if (topBarRef.current) {
-            gsap.set(topBarRef.current, {
-              opacity: Math.max(0, 1 - p * 2.5),
-            });
-          }
-          if (bottomBarRef.current) {
-            gsap.set(bottomBarRef.current, {
-              opacity: Math.max(0, 1 - p * 2.5),
-            });
-          }
+            // B. Transform typography with subtle cinematic depth
+            if (textContainerRef.current) {
+              gsap.set(textContainerRef.current, {
+                y: -p * (isDesktop ? 50 : 20),
+                opacity: Math.max(0.2, 1 - p * 0.8),
+              });
+            }
 
-          // D. Portrait subtle scale and depth translation
-          if (portraitContainerRef.current) {
-            gsap.set(portraitContainerRef.current, {
-              scale: 1 + p * 0.05,
-              y: -p * 20,
-            });
-          }
-        },
-      });
-    }, wrapper);
+            // C. Fade out top and bottom telemetry as user scrolls into the narrative
+            if (topBarRef.current) {
+              gsap.set(topBarRef.current, {
+                opacity: Math.max(0, 1 - p * 2.5),
+              });
+            }
+            if (bottomBarRef.current) {
+              gsap.set(bottomBarRef.current, {
+                opacity: Math.max(0, 1 - p * 2.5),
+              });
+            }
 
-    return () => ctx.revert();
+            // D. Portrait subtle scale and depth translation
+            if (portraitContainerRef.current) {
+              gsap.set(portraitContainerRef.current, {
+                scale: 1 + p * 0.05,
+                y: -p * 20,
+              });
+            }
+          },
+        });
+      }
+    );
+
+    return () => mm.revert();
   }, [isReady]);
 
   // 3. Desktop Mouse Parallax (Restrained & physics-based)
@@ -308,7 +318,7 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
       <section
         ref={sectionRef}
         id="hero"
-        className="relative min-h-[100svh] flex flex-col justify-between pt-28 sm:pt-32 pb-10 px-6 sm:px-8 lg:px-12 max-w-7xl mx-auto overflow-hidden select-none"
+        className="relative min-h-[100svh] flex flex-col justify-between pt-24 sm:pt-28 lg:pt-32 pb-6 sm:pb-8 editorial-container overflow-hidden select-none hero-viewport-fit"
       >
         {/* Dynamic Background Halo for Parallax Depth */}
         <div
@@ -316,51 +326,48 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[500px] sm:h-[600px] bg-radial-glow opacity-30 pointer-events-none -z-10 blur-3xl will-change-transform"
         />
 
-        {/* 1. Top Telemetry & Index Bar */}
+        {/* 1. Top Editorial Status Bar */}
         <div
           ref={topBarRef}
-          className="flex items-center justify-between text-[11px] font-mono text-[#8A8A8A] mb-8 border-b border-white/[0.06] pb-3"
+          className="flex items-center justify-between text-xs font-mono text-[#8A8A8A] mb-4 sm:mb-6 lg:mb-8 border-b border-white/[0.08] pb-3 hero-top-bar-fit"
         >
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-white">
-              <Terminal className="w-3 h-3 text-emerald-400" />
-              <span>INDEX 01</span>
-            </span>
-            <span className="hidden sm:inline tracking-widest text-[#737373]">
-              PORTFOLIO CORE // 2026
-            </span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-emerald-400 font-bold">01 //</span>
+            <span className="tracking-[0.2em] text-white/90 font-medium">INDEX</span>
+            <span className="hidden sm:inline text-white/30">·</span>
+            <span className="hidden sm:inline text-white/40 tracking-wider">2026</span>
           </div>
 
-          <div className="flex items-center gap-2 text-emerald-400">
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-            <span className="tracking-wider text-[11px]">{HERO_CONTENT.status}</span>
+          <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="tracking-wider uppercase text-[11px]">{HERO_CONTENT.status}</span>
           </div>
         </div>
 
-        {/* 2. Main Editorial Grid: Typography (Left) + 360° Portrait (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center my-auto w-full">
+        {/* 2. Main Editorial Grid: Typography (Left) + Dominant 360° Portrait (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-12 items-center my-auto w-full">
           
           {/* Left Column: Masked Display Typography & Copy */}
           <div
             ref={textContainerRef}
-            className="lg:col-span-7 flex flex-col justify-center z-10 will-change-transform"
+            className="lg:col-span-5 xl:col-span-5 flex flex-col justify-center z-10 will-change-transform"
           >
             {/* Small Editorial Identity Eyebrow */}
             <div
               ref={eyebrowRef}
-              className="flex items-center gap-3 text-xs sm:text-sm font-mono tracking-[0.25em] text-[#8A8A8A] uppercase mb-4 sm:mb-6"
+              className="flex items-center gap-3 text-xs sm:text-sm font-mono tracking-[0.25em] text-[#8A8A8A] uppercase mb-3 sm:mb-4 lg:mb-6"
             >
               <span className="w-6 h-[1.5px] bg-emerald-400" />
               <span className="text-white/90 font-medium">{HERO_CONTENT.eyebrow}</span>
             </div>
 
             {/* Display Words with Masked Overflow */}
-            <div className="space-y-1 sm:space-y-2 mb-6 sm:mb-8">
+            <div className="space-y-1 sm:space-y-2 mb-4 sm:mb-6 lg:mb-8 hero-headline-spacing-fit">
               {/* Word 1: SOFTWARE */}
               <div className="overflow-hidden">
                 <span
                   ref={word1Ref}
-                  className="inline-block text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black font-display tracking-tight text-[#F5F5F5] leading-[0.88] uppercase will-change-transform"
+                  className="inline-block text-[clamp(2.15rem,min(7vw,10vh),6.75rem)] font-black font-display tracking-tight text-[#F5F5F5] leading-[0.88] uppercase will-change-transform"
                 >
                   SOFTWARE
                 </span>
@@ -370,7 +377,7 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
               <div className="overflow-hidden">
                 <span
                   ref={word2Ref}
-                  className="inline-block text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black font-display tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40 leading-[0.88] uppercase will-change-transform"
+                  className="inline-block text-[clamp(2.15rem,min(7vw,10vh),6.75rem)] font-black font-display tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40 leading-[0.88] uppercase will-change-transform"
                 >
                   ENGINEER
                 </span>
@@ -380,36 +387,36 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
             {/* Concise Supporting Copy */}
             <p
               ref={descRef}
-              className="text-base sm:text-lg md:text-xl text-[#8A8A8A] max-w-xl font-light leading-relaxed mb-8 sm:mb-10"
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-[#8A8A8A] max-w-xl font-light leading-relaxed mb-6 sm:mb-8 lg:mb-10 hero-desc-fit"
             >
               {HERO_CONTENT.description}
             </p>
 
             {/* Action CTAs */}
-            <div ref={ctaGroupRef} className="flex flex-wrap items-center gap-4">
-              <a
+            <div ref={ctaGroupRef} className="flex flex-wrap items-center gap-3 sm:gap-4">
+              <ShimmerButton
                 href="#projects"
                 onClick={scrollToProjects}
-                className="group relative inline-flex items-center gap-3 px-7 sm:px-9 py-4 rounded-full bg-white text-black font-semibold text-xs sm:text-sm tracking-widest hover:bg-emerald-400 transition-all duration-300 shadow-[0_0_25px_rgba(255,255,255,0.18)] hover:shadow-[0_0_35px_rgba(16,185,129,0.45)] cursor-pointer"
+                variant="primary"
               >
                 <span>{HERO_CONTENT.ctaPrimary}</span>
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </a>
+              </ShimmerButton>
 
-              <a
+              <ShimmerButton
                 href="#contact"
                 onClick={scrollToContact}
-                className="inline-flex items-center gap-2 px-6 sm:px-8 py-4 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-[#F5F5F5] font-medium text-xs sm:text-sm tracking-widest transition-all duration-200 cursor-pointer"
+                variant="secondary"
               >
                 <span>{HERO_CONTENT.ctaSecondary}</span>
-              </a>
+              </ShimmerButton>
             </div>
           </div>
 
-          {/* Right Column: 360-degree Rotating Portrait Visual */}
+          {/* Right Column: Large Dominant 360° Rotating Portrait Visual */}
           <div
             ref={portraitContainerRef}
-            className="lg:col-span-5 flex justify-center lg:justify-end z-0 will-change-transform"
+            className="lg:col-span-7 xl:col-span-7 flex justify-center lg:justify-center xl:justify-center z-0 will-change-transform w-full"
           >
             <HeroPortrait ref={portraitRef} isReady={isReady} />
           </div>
@@ -418,12 +425,10 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
         {/* 3. Bottom Telemetry & Scroll Prompt */}
         <div
           ref={bottomBarRef}
-          className="flex items-center justify-between pt-6 sm:pt-8 border-t border-white/[0.06] text-[#8A8A8A] text-xs font-mono"
+          className="flex items-center justify-between pt-4 sm:pt-6 lg:pt-8 border-t border-white/[0.06] text-[#8A8A8A] text-xs font-mono"
         >
-          <div className="flex items-center gap-2.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="tracking-widest text-[#A3A3A3]">KARACHI, PK · UTC+5</span>
-          </div>
+          {/* Real-time Interactive Karachi, PK (UTC+5) Clock */}
+          <LiveClockBadge />
 
           <div className="flex items-center gap-2 tracking-widest text-[11px] text-emerald-400/90 animate-bounce">
             <span>{HERO_CONTENT.helper}</span>
@@ -434,3 +439,5 @@ export const Hero: React.FC<HeroProps> = ({ isReady = true }) => {
     </div>
   );
 };
+
+

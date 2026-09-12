@@ -12,8 +12,8 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="border-t border-white/[0.08] bg-[#050505] py-14 px-6 sm:px-8 lg:px-12 relative z-20">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+    <footer className="border-t border-white/[0.08] bg-[#050505] pt-10 sm:pt-14 pb-28 sm:pb-32 relative z-20">
+      <div className="editorial-container flex flex-col md:flex-row items-center justify-between gap-8">
         
         {/* Brand & Identity */}
         <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
@@ -59,7 +59,7 @@ export const Footer: React.FC = () => {
       </div>
 
       {/* Bottom Copyright & Credit */}
-      <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-[#525252] text-center sm:text-left">
+      <div className="editorial-container mt-10 pt-6 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-[#525252] text-center sm:text-left">
         <div>
           © 2026 {PERSONAL_INFO.name.toUpperCase()}. ALL RIGHTS RESERVED.
         </div>

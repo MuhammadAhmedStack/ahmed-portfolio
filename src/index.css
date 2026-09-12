@@ -65,6 +65,23 @@ html.lenis, html.lenis body {
   letter-spacing: 0.25em;
 }
 
+/* Global Editorial Layout & Grid System */
+.editorial-container {
+  width: 100%;
+  max-width: 80rem; /* 1280px */
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 3.5rem);
+}
+
+.editorial-section {
+  position: relative;
+  width: 100%;
+  padding-top: clamp(4.5rem, 9vw, 8rem);
+  padding-bottom: clamp(4.5rem, 9vw, 8rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
 /* Subtle architectural grid pattern */
 .bg-subtle-grid {
   background-size: 40px 40px;
@@ -97,6 +114,108 @@ html.lenis, html.lenis body {
   background: #333333;
 }
 
+/* Hero Portrait responsive sizing: dominant cinematic visual with fluid 3:4 constraints */
+.hero-portrait-sizing {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  height: auto;
+  max-height: clamp(520px, 84vh, 880px);
+  max-width: min(100%, calc(clamp(520px, 84vh, 880px) * 0.75));
+}
+
+/* Short viewport desktop adjustments (e.g. 1366x768 or laptops with display scaling) */
+@media (max-height: 850px) and (min-width: 1024px) {
+  .hero-viewport-fit {
+    padding-top: clamp(5.25rem, 11vh, 6.25rem) !important;
+    padding-bottom: 0.75rem !important;
+  }
+  .hero-top-bar-fit {
+    margin-bottom: 0.4rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+  .hero-headline-spacing-fit {
+    margin-bottom: 0.3rem !important;
+  }
+  .hero-desc-fit {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.35 !important;
+  }
+  .hero-portrait-sizing {
+    max-height: clamp(460px, 78vh, 640px) !important;
+    max-width: min(100%, calc(clamp(460px, 78vh, 640px) * 0.75)) !important;
+  }
+}
+
+@media (max-height: 720px) and (min-width: 1024px) {
+  .hero-viewport-fit {
+    padding-top: clamp(4.5rem, 9.5vh, 5.25rem) !important;
+    padding-bottom: 0.5rem !important;
+  }
+  .hero-top-bar-fit {
+    margin-bottom: 0.25rem !important;
+    padding-bottom: 0.2rem !important;
+  }
+  .hero-headline-spacing-fit {
+    margin-bottom: 0.2rem !important;
+  }
+  .hero-desc-fit {
+    margin-bottom: 0.4rem !important;
+    font-size: 0.825rem !important;
+    line-height: 1.3 !important;
+  }
+  .hero-portrait-sizing {
+    max-height: clamp(410px, 74vh, 540px) !important;
+    max-width: min(100%, calc(clamp(410px, 74vh, 540px) * 0.75)) !important;
+  }
+}
+
+/* Lightswind UI Interactive Animations & Keyframes */
+@keyframes border-beam {
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  50%, 100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+@keyframes laser-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-shimmer-sweep {
+  animation: shimmer-sweep 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Custom Animated Arrow Cursor on Desktop */
+@media (pointer: fine) {
+  body.has-custom-cursor,
+  body.has-custom-cursor a,
+  body.has-custom-cursor button,
+  body.has-custom-cursor [role="button"],
+  body.has-custom-cursor input,
+  body.has-custom-cursor textarea,
+  body.has-custom-cursor select,
+  body.has-custom-cursor .cursor-pointer {
+    cursor: none !important;
+  }
+}
+
 /* Reduced motion overrides */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -106,3 +225,4 @@ html.lenis, html.lenis body {
     scroll-behavior: auto !important;
   }
 }
+

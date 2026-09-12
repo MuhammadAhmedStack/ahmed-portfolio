@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SKILL_CATEGORIES } from '../../data/skills';
-import { ArrowRight, CheckCircle2, Cpu, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Cpu } from 'lucide-react';
+import { SpotlightCard } from '../ui/SpotlightCard';
+import { BorderBeam } from '../ui/BorderBeam';
 import { gsap } from '../../lib/gsap';
 
 export const SkillsSection: React.FC = () => {
@@ -146,181 +148,169 @@ export const SkillsSection: React.FC = () => {
     <section
       ref={sectionRef}
       id="skills"
-      className="relative py-28 sm:py-36 px-6 sm:px-8 lg:px-12 max-w-7xl mx-auto border-t border-white/[0.06] overflow-hidden"
+      className="editorial-section"
     >
-      {/* Background Watermark Index */}
-      <div className="absolute top-12 right-6 lg:right-12 text-[100px] sm:text-[140px] font-black font-display text-white/[0.015] select-none pointer-events-none -z-10 leading-none">
-        03
-      </div>
+      <div className="editorial-container">
+        {/* Standard Editorial Section Header */}
+        <div
+          ref={headerRef}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 lg:mb-20 pb-6 border-b border-white/[0.08] gap-4"
+        >
+          <div>
+            <div className="flex items-center gap-2.5 text-xs font-mono text-[#8A8A8A] tracking-[0.2em] uppercase mb-3">
+              <span className="text-emerald-400 font-bold">03 //</span>
+              <span>EXPERTISE</span>
+            </div>
 
-      {/* Top Section Header */}
-      <div
-        ref={headerRef}
-        className="flex flex-col md:flex-row md:items-end justify-between mb-14 sm:mb-20 border-b border-white/[0.06] pb-6"
-      >
-        <div>
-          <div className="flex items-center gap-3 text-xs font-mono text-[#8A8A8A] tracking-widest uppercase mb-4">
-            <span className="text-emerald-400 font-bold">03 //</span>
-            <span>EXPERTISE & ARCHITECTURE</span>
+            <h2 className="text-[clamp(1.85rem,5vw,3.75rem)] font-black font-display text-white tracking-tight uppercase leading-[0.92]">
+              TECHNICAL
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40">
+                SPECIALIZATION
+              </span>
+            </h2>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black font-display text-white tracking-tight uppercase leading-[0.92]">
-            TECHNICAL
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40">
-              SPECIALIZATION
-            </span>
-          </h2>
+          <p className="text-xs sm:text-sm font-mono text-[#8A8A8A] max-w-sm leading-relaxed md:text-right">
+            Production capabilities deployed across verified mobile, backend systems, and AI-assisted workflows.
+          </p>
         </div>
 
-        <p className="text-xs sm:text-sm font-mono text-[#8A8A8A] max-w-md mt-6 md:mt-0 leading-relaxed">
-          Production capabilities deployed across verified mobile, backend systems, and AI-assisted workflows. No arbitrary proficiency scores.
-        </p>
-      </div>
+        {/* Main Interactive Editorial Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
+          {/* Left Column: Category Navigation */}
+          <div
+            ref={categoryListRef}
+            role="tablist"
+            aria-label="Expertise Categories"
+            className="lg:col-span-5 flex flex-col gap-2"
+          >
+            {SKILL_CATEGORIES.map((category, index) => {
+              const isActive = category.id === activeCategoryId;
+              const formattedIndex = (index + 1).toString().padStart(2, '0');
 
-      {/* Main Interactive Editorial Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-        
-        {/* Left Column: Editorial Category Selector (Interactive Menu) */}
-        <div
-          ref={categoryListRef}
-          role="tablist"
-          aria-label="Expertise Categories"
-          className="lg:col-span-5 flex flex-col gap-2"
-        >
-          {SKILL_CATEGORIES.map((category, index) => {
-            const isActive = category.id === activeCategoryId;
-            const formattedIndex = (index + 1).toString().padStart(2, '0');
-
-            return (
-              <button
-                key={category.id}
-                role="tab"
-                id={`tab-${category.id}`}
-                aria-selected={isActive}
-                aria-controls={`panel-${category.id}`}
-                tabIndex={isActive ? 0 : -1}
-                onClick={() => switchCategory(category.id)}
-                onMouseEnter={() => switchCategory(category.id)}
-                onKeyDown={(e) => handleKeyDown(e, index)}
-                className={`w-full text-left p-5 sm:p-6 rounded-xl transition-all duration-300 flex items-center justify-between group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
-                  isActive
-                    ? 'bg-[#0A0A0A] border border-emerald-500/40 shadow-[0_4px_30px_rgba(16,185,129,0.08)] translate-x-1 sm:translate-x-2'
-                    : 'bg-transparent border border-white/[0.04] hover:border-white/[0.12] hover:bg-white/[0.02]'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  {/* Category Index */}
-                  <span
-                    className={`text-xs font-mono tracking-wider transition-colors ${
-                      isActive ? 'text-emerald-400 font-bold' : 'text-[#525252] group-hover:text-[#8A8A8A]'
-                    }`}
-                  >
-                    {formattedIndex} //
-                  </span>
-
-                  {/* Category Name */}
-                  <span
-                    className={`text-lg sm:text-2xl font-bold font-display tracking-wide uppercase transition-colors ${
-                      isActive ? 'text-white' : 'text-white/40 group-hover:text-white/80'
-                    }`}
-                  >
-                    {category.name}
-                  </span>
-                </div>
-
-                {/* Active Indicator Arrow */}
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+              return (
+                <button
+                  key={category.id}
+                  role="tab"
+                  id={`tab-${category.id}`}
+                  aria-selected={isActive}
+                  aria-controls={`panel-${category.id}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => switchCategory(category.id)}
+                  onMouseEnter={() => {
+                    if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+                      switchCategory(category.id);
+                    }
+                  }}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
+                  className={`w-full text-left p-3.5 sm:p-5 rounded-2xl transition-all duration-300 flex items-center justify-between group cursor-pointer touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
                     isActive
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rotate-0'
-                      : 'opacity-0 text-[#525252] -rotate-45 group-hover:opacity-60'
+                      ? 'bg-[#0A0A0A] border border-emerald-500/40 shadow-[0_4px_30px_rgba(16,185,129,0.08)] translate-x-1'
+                      : 'bg-transparent border border-white/[0.04] hover:border-white/[0.12] hover:bg-white/[0.02]'
                   }`}
                 >
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Category Index */}
+                    <span
+                      className={`text-xs font-mono tracking-wider transition-colors ${
+                        isActive ? 'text-emerald-400 font-bold' : 'text-[#525252] group-hover:text-[#8A8A8A]'
+                      }`}
+                    >
+                      {formattedIndex} //
+                    </span>
 
-        {/* Right Column: Active Category Stage */}
-        <div
-          ref={stageCardRef}
-          role="tabpanel"
-          id={`panel-${activeCategory.id}`}
-          aria-labelledby={`tab-${activeCategory.id}`}
-          className="lg:col-span-7 rounded-2xl bg-[#0A0A0A] border border-white/[0.08] p-7 sm:p-10 relative overflow-hidden min-h-[440px] flex flex-col justify-between shadow-2xl"
-        >
-          {/* Subtle Ambient Radial Glow */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/[0.04] rounded-full blur-3xl pointer-events-none" />
+                    {/* Category Name */}
+                    <span
+                      className={`text-base sm:text-lg lg:text-xl font-bold font-display tracking-wide uppercase transition-colors ${
+                        isActive ? 'text-white' : 'text-white/40 group-hover:text-white/80'
+                      }`}
+                    >
+                      {category.name}
+                    </span>
+                  </div>
 
-          <div>
-            {/* Stage Header */}
-            <div className="flex items-center justify-between text-xs font-mono text-[#8A8A8A] mb-4 pb-4 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2 text-emerald-400">
-                <Cpu className="w-4 h-4" />
-                <span className="tracking-widest font-semibold">{activeCategory.name} ARCHITECTURE</span>
-              </div>
-              <span className="text-[11px] text-[#737373]">
-                {activeCategory.skills.length} VERIFIED TECHNOLOGIES
-              </span>
-            </div>
-
-            {/* Narrative Description */}
-            <p className="text-sm sm:text-base text-[#D4D4D4] font-light leading-relaxed mb-8 max-w-2xl">
-              {activeCategory.description}
-            </p>
-
-            {/* Technology Items Matrix */}
-            <div
-              ref={techGridRef}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
-            >
-              {activeCategory.skills.map((skill, sIdx) => {
-                const techNumber = (sIdx + 1).toString().padStart(2, '0');
-
-                return (
+                  {/* Active Indicator Arrow */}
                   <div
-                    key={skill.name}
-                    className={`p-4 sm:p-5 rounded-xl border transition-all duration-200 flex items-center justify-between group ${
-                      skill.isPrimary
-                        ? 'bg-[#111111] border-emerald-500/25 hover:border-emerald-500/50'
-                        : 'bg-[#0e0e0e] border-white/[0.06] hover:border-white/[0.15]'
+                    className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${
+                      isActive
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                        : 'opacity-0 text-[#525252] group-hover:opacity-60'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-[11px] font-mono text-[#525252] group-hover:text-emerald-400/80 transition-colors">
-                        {techNumber}
-                      </span>
-                      <span className="text-sm sm:text-base font-medium text-white font-display tracking-tight">
-                        {skill.name}
-                      </span>
-                    </div>
-
-                    {skill.isPrimary && (
-                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/[0.08] border border-emerald-500/25 text-[10px] font-mono text-emerald-300 font-semibold tracking-wider">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                        <span>CORE</span>
-                      </span>
-                    )}
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </div>
-                );
-              })}
-            </div>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Bottom Telemetry Footer */}
-          <div className="mt-8 pt-6 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-[#737373]">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span>STACK CERTIFIED // DOCUMENTED CODEBASE</span>
+          {/* Right Column: Active Category Stage */}
+          <div ref={stageCardRef} className="lg:col-span-7">
+            <SpotlightCard
+              role="tabpanel"
+              id={`panel-${activeCategory.id}`}
+              aria-labelledby={`tab-${activeCategory.id}`}
+              spotlightColor="rgba(16, 185, 129, 0.18)"
+              className="rounded-2xl bg-[#080808]/90 border border-white/[0.08] p-4 sm:p-8 lg:p-10 relative overflow-hidden min-h-[400px] flex flex-col justify-between shadow-2xl"
+            >
+              <BorderBeam duration={9} colorFrom="#10b981" colorTo="#ffffff" />
+              <div>
+                {/* Stage Header */}
+                <div className="flex items-center justify-between text-xs font-mono text-[#8A8A8A] mb-5 pb-4 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-2 text-emerald-400">
+                    <Cpu className="w-4 h-4" />
+                    <span className="tracking-widest font-semibold">{activeCategory.name} ARCHITECTURE</span>
+                  </div>
+                  <span className="text-[11px] text-[#737373]">
+                    {activeCategory.skills.length} TECHNOLOGIES
+                  </span>
+                </div>
+
+              {/* Narrative Description */}
+              <p className="text-sm sm:text-base text-[#D4D4D4] font-light leading-relaxed mb-8 max-w-2xl">
+                {activeCategory.description}
+              </p>
+
+              {/* Technology Items Matrix */}
+              <div
+                ref={techGridRef}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+              >
+                {activeCategory.skills.map((skill, sIdx) => {
+                  const techNumber = (sIdx + 1).toString().padStart(2, '0');
+
+                  return (
+                    <div
+                      key={skill.name}
+                      className={`p-3.5 sm:p-4 rounded-xl border transition-all duration-200 flex items-center justify-between group ${
+                        skill.isPrimary
+                          ? 'bg-[#111111] border-emerald-500/25 hover:border-emerald-500/50'
+                          : 'bg-[#0c0c0c] border-white/[0.06] hover:border-white/[0.15]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-[11px] font-mono text-[#525252] group-hover:text-emerald-400/80 transition-colors">
+                          {techNumber}
+                        </span>
+                        <span className="text-sm sm:text-base font-medium text-white font-display tracking-tight">
+                          {skill.name}
+                        </span>
+                      </div>
+
+                      {skill.isPrimary && (
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/[0.08] border border-emerald-500/25 text-[10px] font-mono text-emerald-300 font-semibold tracking-wider">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          <span>CORE</span>
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="hidden sm:flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-emerald-400" />
-              <span>PRODUCTION GRADE</span>
-            </div>
-          </div>
+          </SpotlightCard>
+        </div>
         </div>
       </div>
     </section>

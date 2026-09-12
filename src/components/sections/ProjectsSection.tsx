@@ -2,6 +2,9 @@ import React, { useRef, useEffect } from 'react';
 import { PROJECTS } from '../../data/projects';
 import { ProjectDeviceMockup } from '../projects/ProjectDeviceMockup';
 import { CheckCircle2, Mic, ArrowRight, ShieldCheck, Cpu } from 'lucide-react';
+import { SpotlightCard } from '../ui/SpotlightCard';
+import { BorderBeam } from '../ui/BorderBeam';
+import { ShimmerButton } from '../ui/ShimmerButton';
 import { gsap } from '../../lib/gsap';
 
 export const ProjectsSection: React.FC = () => {
@@ -91,56 +94,60 @@ export const ProjectsSection: React.FC = () => {
     <section
       ref={sectionRef}
       id="projects"
-      className="relative py-28 sm:py-36 px-6 sm:px-8 lg:px-12 max-w-7xl mx-auto border-t border-white/[0.06] overflow-hidden"
+      className="editorial-section"
     >
-      {/* Background Watermark Index */}
-      <div className="absolute top-12 right-6 lg:right-12 text-[100px] sm:text-[140px] font-black font-display text-white/[0.015] select-none pointer-events-none -z-10 leading-none">
-        05
-      </div>
+      <div className="editorial-container">
+        {/* Standard Editorial Section Header */}
+        <div
+          ref={headerRef}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 lg:mb-20 pb-6 border-b border-white/[0.08] gap-4"
+        >
+          <div>
+            <div className="flex items-center gap-2.5 text-xs font-mono text-[#8A8A8A] tracking-[0.2em] uppercase mb-3">
+              <span className="text-emerald-400 font-bold">05 //</span>
+              <span>CASE STUDIES</span>
+            </div>
 
-      {/* Top Header */}
-      <div
-        ref={headerRef}
-        className="flex flex-col md:flex-row md:items-end justify-between mb-16 sm:mb-24 border-b border-white/[0.06] pb-6"
-      >
-        <div>
-          <div className="flex items-center gap-3 text-xs font-mono text-[#8A8A8A] tracking-widest uppercase mb-4">
-            <span className="text-emerald-400 font-bold">05 //</span>
-            <span>VERIFIED CASE STUDIES</span>
+            <h2 className="text-[clamp(1.85rem,5vw,3.75rem)] font-black font-display text-white tracking-tight uppercase leading-[0.92]">
+              FLAGSHIP
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40">
+                PROJECTS
+              </span>
+            </h2>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black font-display text-white tracking-tight uppercase leading-[0.92]">
-            FLAGSHIP
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40">
-              PROJECTS
-            </span>
-          </h2>
+          <p className="text-xs sm:text-sm font-mono text-[#8A8A8A] max-w-sm leading-relaxed md:text-right">
+            Deep-dive into verified mobile applications engineered with offline resilience, cloud security, and production AI integration.
+          </p>
         </div>
 
-        <p className="text-xs sm:text-sm font-mono text-[#8A8A8A] max-w-md mt-6 md:mt-0 leading-relaxed">
-          Deep-dive into verified mobile applications engineered with offline resilience, cloud security, and production AI integration.
-        </p>
-      </div>
+        {/* Flagship Projects Showcase List */}
+        <div className="space-y-12 sm:space-y-24 lg:space-y-32">
+          {PROJECTS.map((project, index) => {
+            const isReversed = index % 2 !== 0;
 
-      {/* Flagship Projects Showcase List */}
-      <div className="space-y-24 sm:space-y-36">
-        {PROJECTS.map((project, index) => {
-          const isReversed = index % 2 !== 0;
-
-          return (
-            <div
-              key={project.id}
-              ref={(el) => {
-                projectCardsRef.current[index] = el;
-              }}
-              className="rounded-3xl border border-white/[0.08] bg-[#070707] p-7 sm:p-12 lg:p-14 relative overflow-hidden shadow-2xl transition-all duration-300 hover:border-white/[0.16]"
-            >
-              {/* Radial Accent Glow */}
+            return (
               <div
-                className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-3xl opacity-10 pointer-events-none"
-                style={{ background: `radial-gradient(circle, ${project.accentColor} 0%, transparent 70%)` }}
-              />
+                key={project.id}
+                ref={(el) => {
+                  projectCardsRef.current[index] = el;
+                }}
+              >
+                <SpotlightCard
+                  spotlightColor={project.accentColor ? `${project.accentColor}30` : 'rgba(16, 185, 129, 0.2)'}
+                  className="rounded-3xl border border-white/[0.08] bg-[#070707]/90 p-4 sm:p-8 lg:p-12 xl:p-14 relative overflow-hidden shadow-2xl transition-all duration-300 hover:border-white/[0.2]"
+                >
+                  {/* Border Beam for Flagship Project */}
+                  {index === 0 && (
+                    <BorderBeam duration={12} colorFrom="#10b981" colorTo="#38bdf8" />
+                  )}
+
+                  {/* Radial Accent Glow */}
+                  <div
+                    className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-3xl opacity-10 pointer-events-none"
+                    style={{ background: `radial-gradient(circle, ${project.accentColor} 0%, transparent 70%)` }}
+                  />
 
               <div
                 className={`grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center ${
@@ -161,7 +168,7 @@ export const ProjectsSection: React.FC = () => {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black font-display text-white mb-2 tracking-tight uppercase">
+                    <h3 className="text-[clamp(1.75rem,5vw,3.5rem)] font-black font-display text-white mb-2 tracking-tight uppercase">
                       {project.title}
                     </h3>
 
@@ -275,13 +282,13 @@ export const ProjectsSection: React.FC = () => {
 
                   {/* Project Action CTA */}
                   <div className="pt-2">
-                    <a
+                    <ShimmerButton
                       href="#contact"
-                      className="group inline-flex items-center gap-3 px-6 sm:px-8 py-3.5 rounded-full bg-white text-black font-semibold text-xs font-mono tracking-wider hover:bg-emerald-400 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] cursor-pointer"
+                      variant="primary"
                     >
                       <span>{project.ctaText}</span>
                       <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </a>
+                    </ShimmerButton>
                   </div>
                 </div>
 
@@ -297,9 +304,11 @@ export const ProjectsSection: React.FC = () => {
                   />
                 </div>
               </div>
-            </div>
-          );
-        })}
+            </SpotlightCard>
+          </div>
+        );
+      })}
+        </div>
       </div>
     </section>
   );

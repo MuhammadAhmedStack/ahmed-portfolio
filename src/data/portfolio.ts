@@ -31,6 +31,8 @@ export const PERSONAL_INFO: PersonalInfo = {
   interests: ["Mobile Development", "Backend Systems", "AI-Powered Experiences"],
   socialLinks: {
     linkedin: "https://www.linkedin.com/in/muhammadahmedstack/",
+    github: "https://github.com/MuhammadAhmedStack",
+    email: "muhammadahmedstack@gmail.com",
   },
 };
 

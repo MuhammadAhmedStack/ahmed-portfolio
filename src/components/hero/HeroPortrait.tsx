@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
-import { Sparkles, Compass } from 'lucide-react';
+import { Compass } from 'lucide-react';
 
 export interface HeroPortraitHandle {
   updateProgress: (progress: number) => void;
@@ -35,38 +35,56 @@ export const HeroPortrait = forwardRef<HeroPortraitHandle, HeroPortraitProps>(({
   const [initialFrameLoaded, setInitialFrameLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
-  // Draw a specific image onto the canvas with object-cover math
+  // Draw a specific image onto the canvas with full-subject containment math
   const drawImageToCanvas = useCallback((img: HTMLImageElement) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
+    // Enable high-fidelity interpolation for razor-sharp image rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
     const width = canvas.width;
     const height = canvas.height;
+    if (width === 0 || height === 0) return;
 
-    // Source image dimensions (720x1280, aspect ratio = 9/16 = 0.5625)
-    const imgRatio = img.naturalWidth / img.naturalHeight || 720 / 1280;
+    // Verified source sequence specifications:
+    // Natural frame: 720x1280.
+    // The actual video content area is 720x960 (3:4 ratio), situated between y=160 and y=1120.
+    // In this content area:
+    // - Highest hair pixel across all 110 frames: y = 187 (giving 32px of safe headroom from y=155)
+    // - Lowest suit jacket pixel: y = 1119 (reaches y=1120)
+    // - Full body width spans 0..719
+    const SRC_X = 0;
+    const SRC_Y = 155;
+    const SRC_W = 720;
+    const SRC_H = 965;
+    const srcRatio = SRC_W / SRC_H; // ~0.746 (3:4)
+
     const canvasRatio = width / height;
 
-    let drawW = width;
-    let drawH = height;
-    let offsetX = 0;
-    let offsetY = 0;
+    let drawW: number;
+    let drawH: number;
+    let drawX: number;
+    let drawY: number;
 
-    // Object-cover calculation
-    if (canvasRatio > imgRatio) {
-      drawW = width;
-      drawH = width / imgRatio;
-      offsetY = (height - drawH) / 2;
-    } else {
+    // Full contain: guarantees head, hair, shoulders, suit jacket, and waist are 100% visible
+    if (canvasRatio > srcRatio) {
       drawH = height;
-      drawW = height * imgRatio;
-      offsetX = (width - drawW) / 2;
+      drawW = height * srcRatio;
+      drawX = (width - drawW) / 2;
+      drawY = 0;
+    } else {
+      drawW = width;
+      drawH = width / srcRatio;
+      drawX = 0;
+      drawY = (height - drawH) / 2;
     }
 
     ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+    ctx.drawImage(img, SRC_X, SRC_Y, SRC_W, SRC_H, drawX, drawY, drawW, drawH);
   }, []);
 
   // Find nearest loaded frame if the target frame is still downloading
@@ -152,14 +170,19 @@ export const HeroPortrait = forwardRef<HeroPortraitHandle, HeroPortraitProps>(({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Handle high-DPI canvas resizing
+    // Handle high-DPI canvas resizing with native devicePixelRatio
     const updateCanvasSize = () => {
       const rect = canvas.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
-      canvas.width = Math.floor(rect.width * dpr);
-      canvas.height = Math.floor(rect.height * dpr);
+      const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2.5));
+      const targetW = Math.round(rect.width * dpr);
+      const targetH = Math.round(rect.height * dpr);
+
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+      }
 
       // Redraw current frame
       const currentImg = getNearestLoadedFrame(currentFrameIndexRef.current);
@@ -171,8 +194,17 @@ export const HeroPortrait = forwardRef<HeroPortraitHandle, HeroPortraitProps>(({
     updateCanvasSize();
     window.addEventListener('resize', updateCanvasSize);
 
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && wrapperRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        updateCanvasSize();
+      });
+      resizeObserver.observe(wrapperRef.current);
+    }
+
     return () => {
       window.removeEventListener('resize', updateCanvasSize);
+      if (resizeObserver) resizeObserver.disconnect();
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
@@ -199,9 +231,9 @@ export const HeroPortrait = forwardRef<HeroPortraitHandle, HeroPortraitProps>(({
       const canvas = canvasRef.current;
       if (canvas) {
         const rect = canvas.getBoundingClientRect();
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
-        canvas.width = Math.floor(rect.width * dpr);
-        canvas.height = Math.floor(rect.height * dpr);
+        const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2.5));
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
         drawImageToCanvas(initialImg);
       }
 
@@ -234,63 +266,44 @@ export const HeroPortrait = forwardRef<HeroPortraitHandle, HeroPortraitProps>(({
   return (
     <div
       ref={wrapperRef}
-      className={`relative w-full max-w-[320px] sm:max-w-[380px] md:max-w-[430px] lg:max-w-[470px] aspect-[4/5] mx-auto flex items-center justify-center will-change-transform transition-opacity duration-1000 ${
+      className={`relative w-full aspect-[3/4] max-w-[min(100%,380px)] sm:max-w-[500px] md:max-w-[580px] lg:max-w-[680px] xl:max-w-[760px] 2xl:max-w-[840px] mx-auto flex items-center justify-center will-change-transform hero-portrait-sizing transition-opacity duration-1000 ${
         isReady ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      {/* Dynamic Ambient Aura (multi-layered radial glow behind subject) */}
-      <div className="absolute -inset-6 sm:-inset-10 bg-gradient-to-tr from-emerald-500/15 via-emerald-400/5 to-transparent rounded-[2.5rem] blur-3xl pointer-events-none -z-10" />
-      <div className="absolute inset-4 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none -z-10" />
+      {/* Deep Atmospheric Ambient Halo behind the subject */}
+      <div className="absolute -inset-12 sm:-inset-20 bg-gradient-to-tr from-emerald-500/25 via-emerald-400/10 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute inset-4 bg-radial from-white/[0.08] via-emerald-500/15 to-transparent rounded-full blur-2xl pointer-events-none -z-10" />
 
-      {/* Main Integrated Frame */}
-      <div className="relative w-full h-full rounded-2xl overflow-hidden border border-white/[0.08] bg-[#070707] shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex items-center justify-center group">
-        
-        {/* Architectural Subtle Grid */}
-        <div className="absolute inset-0 bg-subtle-grid opacity-20 pointer-events-none z-10" />
+      {/* Soft Blurred Outer Aura / Border Glow (No rigid box) */}
+      <div className="absolute -inset-2 sm:-inset-3 rounded-[3.5rem] sm:rounded-[4.5rem] bg-gradient-to-b from-white/20 via-emerald-500/20 to-transparent blur-xl pointer-events-none -z-10 opacity-75" />
 
-        {/* Cinematic Edge Mask & Vignette: feathers the edges into the dark page background */}
-        <div
-          className="absolute inset-0 pointer-events-none z-20"
-          style={{
-            boxShadow: 'inset 0 0 50px 15px #070707, inset 0 0 100px 30px rgba(5,5,5,0.7)',
-          }}
-        />
+      {/* Cinematic Organic Frame with Soft Blurred Edge */}
+      <div className="relative w-full h-full rounded-[3rem] sm:rounded-[4rem] overflow-hidden flex items-center justify-center group">
+        {/* Soft Blurred Luminous Rim */}
+        <div className="absolute -inset-0.5 rounded-[3rem] sm:rounded-[4rem] bg-gradient-to-b from-white/20 via-emerald-500/20 to-transparent blur-[2px] pointer-events-none z-20 opacity-70" />
+        <div className="absolute inset-0 rounded-[3rem] sm:rounded-[4rem] border border-emerald-500/20 pointer-events-none z-20 shadow-[0_0_40px_rgba(16,185,129,0.15)]" />
 
-        {/* Linear feathering top and bottom to integrate cleanly */}
-        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#070707] via-[#070707]/60 to-transparent pointer-events-none z-20" />
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#070707] via-[#070707]/70 to-transparent pointer-events-none z-20" />
-
-        {/* High-Performance 360° Portrait Canvas Sequence */}
+        {/* High-Performance 360° Portrait Canvas Sequence (100% full subject visibility & crystal-sharp clarity) */}
         <canvas
           ref={canvasRef}
-          className={`w-full h-full object-cover transition-opacity duration-700 ${
+          className={`w-full h-full object-contain transition-opacity duration-700 relative z-10 ${
             initialFrameLoaded && !loadError ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
           }`}
-          style={{
-            maskImage: 'radial-gradient(ellipse at 50% 50%, black 65%, transparent 98%)',
-            WebkitMaskImage: 'radial-gradient(ellipse at 50% 50%, black 65%, transparent 98%)',
-          }}
         />
 
-        {/* High-End Editorial Monogram & Telemetry Fallback (Rendered when sequence is loading/errored) */}
-        {(!initialFrameLoaded || loadError) && (
-          <div className="w-full h-full flex flex-col items-center justify-center p-6 sm:p-8 text-center relative overflow-hidden bg-gradient-to-b from-[#0e0e0e] via-[#080808] to-[#050505]">
-            
-            {/* Concentric Sensor Rings & Radar Line */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-72 h-72 rounded-full border border-emerald-500/[0.08] animate-[spin_30s_linear_infinite]" />
-              <div className="w-56 h-56 rounded-full border border-dashed border-white/[0.06] animate-[spin_40s_linear_infinite_reverse]" />
-              <div className="w-40 h-40 rounded-full border border-white/[0.04]" />
-            </div>
+        {/* Soft Bottom Dissolve so suit jacket merges smoothly into background */}
+        <div className="absolute inset-x-0 bottom-0 h-28 sm:h-36 bg-gradient-to-t from-[#050505] via-[#050505]/75 to-transparent pointer-events-none z-20" />
 
+        {/* High-End Editorial Monogram Fallback (Rendered when sequence is loading/errored) */}
+        {(!initialFrameLoaded || loadError) && (
+          <div className="w-full h-full flex flex-col items-center justify-center p-6 sm:p-8 text-center relative overflow-hidden bg-gradient-to-b from-[#0e0e0e] via-[#080808] to-[#050505] z-10">
             {/* Central Subject Monogram Badge with Radial Progress Gauge */}
-            <div className="relative z-10 w-28 h-28 rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
-              {/* Rotating SVG Progress Gauge */}
+            <div className="relative z-10 w-28 h-28 rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center mb-5 shadow-2xl">
               <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
                 <circle
                   cx="56"
                   cy="56"
-                  r="40"
+                  r="42"
                   fill="none"
                   stroke="rgba(255, 255, 255, 0.05)"
                   strokeWidth="2"
@@ -299,7 +312,7 @@ export const HeroPortrait = forwardRef<HeroPortraitHandle, HeroPortraitProps>(({
                   ref={progressDialRef}
                   cx="56"
                   cy="56"
-                  r="40"
+                  r="42"
                   fill="none"
                   stroke="#10b981"
                   strokeWidth="2"
@@ -308,72 +321,53 @@ export const HeroPortrait = forwardRef<HeroPortraitHandle, HeroPortraitProps>(({
                 />
               </svg>
 
-              {/* Monogram Initials */}
-              <div className="flex flex-col items-center">
-                <span className="font-display text-3xl font-extrabold text-white tracking-wider">
-                  MA
-                </span>
-                <span className="text-[9px] font-mono text-emerald-400 tracking-widest mt-0.5">
-                  TURNTABLE
-                </span>
-              </div>
+              <span className="font-display text-3xl font-extrabold text-white tracking-wider">
+                MA
+              </span>
             </div>
 
             {/* Subject Label */}
-            <div className="relative z-10 font-display text-sm sm:text-base font-semibold tracking-widest text-white uppercase mb-1">
+            <div className="relative z-10 font-display text-base font-semibold tracking-widest text-white uppercase mb-1">
               MUHAMMAD AHMED
             </div>
-            <div className="relative z-10 text-[11px] font-mono tracking-wider text-emerald-400/90 mb-4 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>SPATIAL SENSOR ACTIVE</span>
-            </div>
-
-            {/* Telemetry Status Caption */}
-            <div className="relative z-10 text-[11px] font-mono text-[#737373] max-w-[260px] leading-relaxed border-t border-white/[0.06] pt-3">
-              Spatial 360° Capture Module · 110-Frame Canvas Turntable.
+            <div className="relative z-10 text-xs font-mono tracking-wider text-[#8A8A8A]">
+              360° Interactive Portrait
             </div>
           </div>
         )}
 
-        {/* Top HUD Telemetry Bar */}
-        <div className="absolute top-3.5 inset-x-4 flex items-center justify-between z-30 pointer-events-none text-[10px] font-mono text-[#8A8A8A]">
-          <div className="flex items-center gap-1.5 bg-[#050505]/70 px-2 py-1 rounded border border-white/[0.06] backdrop-blur-sm">
-            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-ping" />
-            <span className="tracking-widest text-white/80">360° TURNTABLE</span>
+        {/* Top HUD Telemetry Floating Pills */}
+        <div className="absolute top-3 inset-x-3 sm:top-4 sm:inset-x-5 flex items-center justify-between z-30 pointer-events-none">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-[#050505]/65 px-2.5 sm:px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-xl shadow-2xl text-[9px] sm:text-[10px] font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="tracking-widest text-white/90">360° PORTRAIT</span>
           </div>
 
           {/* Real-time Angle Readout (Updated via ScrollTrigger) */}
-          <div className="flex items-center gap-1.5 bg-[#050505]/70 px-2.5 py-1 rounded border border-white/[0.06] backdrop-blur-sm">
-            <Compass className="w-3 h-3 text-emerald-400" />
+          <div className="flex items-center gap-1.5 bg-[#050505]/65 px-2.5 sm:px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-xl shadow-2xl text-[9px] sm:text-[10px] font-mono">
+            <Compass className="w-3.5 h-3.5 text-emerald-400" />
             <span ref={angleDisplayRef} className="text-emerald-400 font-bold font-mono tracking-wider">
               000°
             </span>
           </div>
         </div>
 
-        {/* Bottom HUD: Dynamic Compass & Cardinal Marks */}
-        <div className="absolute bottom-3.5 inset-x-4 flex items-center justify-between z-30 pointer-events-none text-[10px] font-mono text-[#737373]">
-          <div className="flex items-center gap-2">
+        {/* Bottom HUD: Dynamic Compass & Scroll Prompt Floating Pills */}
+        <div className="absolute bottom-3 inset-x-3 sm:bottom-4 sm:inset-x-5 flex items-center justify-between z-30 pointer-events-none text-[9px] sm:text-[10px] font-mono">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-[#050505]/65 px-2.5 sm:px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-xl shadow-2xl text-[#8A8A8A]">
             <div
               ref={compassIndicatorRef}
-              className="w-4 h-4 rounded-full border border-emerald-500/40 flex items-center justify-center will-change-transform"
+              className="w-3.5 h-3.5 rounded-full border border-emerald-500/50 flex items-center justify-center will-change-transform"
             >
               <div className="w-1 h-1.5 bg-emerald-400 rounded-full" />
             </div>
-            <span className="tracking-wider text-[#8A8A8A]">ROTATION BEARING</span>
+            <span className="tracking-wider text-[#A3A3A3]">BEARING</span>
           </div>
 
-          <div className="flex items-center gap-1 text-[9px] text-white/50">
-            <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
-            <span>110F CANVAS</span>
+          <div className="bg-[#050505]/65 px-2.5 sm:px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-xl shadow-2xl tracking-widest text-white/60">
+            SCROLL TO ROTATE
           </div>
         </div>
-
-        {/* Precision HUD Corner Brackets */}
-        <div className="absolute top-2.5 left-2.5 w-2.5 h-2.5 border-t-2 border-l-2 border-white/20 pointer-events-none z-30" />
-        <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 border-t-2 border-r-2 border-white/20 pointer-events-none z-30" />
-        <div className="absolute bottom-2.5 left-2.5 w-2.5 h-2.5 border-b-2 border-l-2 border-white/20 pointer-events-none z-30" />
-        <div className="absolute bottom-2.5 right-2.5 w-2.5 h-2.5 border-b-2 border-r-2 border-white/20 pointer-events-none z-30" />
       </div>
     </div>
   );

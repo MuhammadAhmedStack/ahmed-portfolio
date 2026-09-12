@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ArrowUpRight, Code2 } from 'lucide-react';
 import { PERSONAL_INFO } from '../../data/portfolio';
+import { BorderBeam } from '../ui/BorderBeam';
+import { ShimmerButton } from '../ui/ShimmerButton';
 
 interface NavItem {
   name: string;
@@ -70,10 +72,10 @@ export const Navbar: React.FC<NavbarProps> = ({ isReady = true }) => {
       } ${
         isScrolled
           ? 'bg-[#050505]/85 backdrop-blur-md border-b border-white/[0.06] py-3.5'
-          : 'bg-transparent py-6'
+          : 'bg-transparent py-4 sm:py-5'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between">
+      <div className="editorial-container flex items-center justify-between">
         {/* Brand Logo */}
         <a
           href="#"
@@ -87,8 +89,8 @@ export const Navbar: React.FC<NavbarProps> = ({ isReady = true }) => {
           </span>
         </a>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 lg:gap-9">
+        {/* Desktop Navigation Links (Visible on large screens where spacing is comfortable) */}
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
           {NAV_ITEMS.map((item) => (
             <a
               key={item.name}
@@ -102,28 +104,28 @@ export const Navbar: React.FC<NavbarProps> = ({ isReady = true }) => {
         </nav>
 
         {/* Action & Availability Badge */}
-        <div className="hidden md:flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/20 text-[11px] font-mono text-emerald-300">
+        <div className="hidden lg:flex items-center gap-3">
+          <div className="relative overflow-hidden flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/[0.08] border border-emerald-500/25 text-[11px] font-mono text-emerald-300">
+            <BorderBeam duration={8} colorFrom="#10b981" colorTo="#ffffff" />
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>AVAILABLE</span>
           </div>
 
-          <a
+          <ShimmerButton
             href={PERSONAL_INFO.socialLinks.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-white/20 text-xs font-medium tracking-wider text-white transition-all duration-200"
+            variant="secondary"
+            className="!py-1.5 !px-4 !text-xs !normal-case"
           >
             <span>CONNECT</span>
             <ArrowUpRight className="w-3.5 h-3.5 text-[#8A8A8A]" />
-          </a>
+          </ShimmerButton>
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile / Tablet Menu Button */}
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 rounded-lg bg-white/[0.05] border border-white/10 text-white hover:bg-white/10 transition-colors cursor-pointer"
+          className="lg:hidden p-2 rounded-lg bg-white/[0.05] border border-white/10 text-white hover:bg-white/10 transition-colors cursor-pointer"
           aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-navigation-menu"
@@ -136,22 +138,22 @@ export const Navbar: React.FC<NavbarProps> = ({ isReady = true }) => {
       {mobileMenuOpen && (
         <div
           id="mobile-navigation-menu"
-          className="md:hidden fixed inset-x-0 top-[60px] bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/10 px-6 py-8 flex flex-col gap-6 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-200"
+          className="lg:hidden absolute inset-x-0 top-full bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-white/10 px-6 py-6 flex flex-col gap-5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 max-h-[calc(100vh-4.5rem)] overflow-y-auto"
         >
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             {NAV_ITEMS.map((item) => (
               <a
                 key={item.name}
                 href={item.href}
                 onClick={(e) => scrollToSection(e, item.href)}
-                className="text-sm font-medium tracking-widest text-[#8A8A8A] hover:text-white transition-colors py-2 border-b border-white/[0.04]"
+                className="text-sm font-medium tracking-widest text-[#8A8A8A] hover:text-white active:text-emerald-400 active:bg-white/[0.04] transition-colors py-3 px-3 rounded-lg border-b border-white/[0.04] touch-manipulation"
               >
                 {item.name}
               </a>
             ))}
           </div>
 
-          <div className="pt-2 flex items-center justify-between">
+          <div className="pt-2 flex items-center justify-between border-t border-white/[0.06]">
             <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>Available for engineering roles</span>
@@ -160,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isReady = true }) => {
               href={PERSONAL_INFO.socialLinks.linkedin}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-white underline underline-offset-4"
+              className="flex items-center gap-1 text-xs text-white underline underline-offset-4 touch-manipulation py-2"
             >
               <span>LinkedIn</span>
               <ArrowUpRight className="w-3 h-3" />

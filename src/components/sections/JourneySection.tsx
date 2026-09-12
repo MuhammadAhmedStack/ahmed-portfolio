@@ -1,41 +1,47 @@
 import React, { useRef, useEffect } from 'react';
 import { JOURNEY_MILESTONES } from '../../data/journey';
-import { Calendar, GraduationCap, Briefcase, Rocket, Terminal } from 'lucide-react';
-import { gsap, ScrollTrigger } from '../../lib/gsap';
+import { Calendar, GraduationCap, Briefcase, Rocket } from 'lucide-react';
+import { gsap } from '../../lib/gsap';
 
-export const JourneySection: React.FC = () => {
+interface JourneySectionProps {
+  isReady?: boolean;
+}
+
+export const JourneySection: React.FC<JourneySectionProps> = ({ isReady = true }) => {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const timelineContainerRef = useRef<HTMLDivElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
   const lineRef = useRef<HTMLDivElement | null>(null);
+  const beamHeadRef = useRef<HTMLDivElement | null>(null);
   const milestonesRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section) return;
+    const timelineContainer = timelineContainerRef.current;
+    const track = trackRef.current;
+    const line = lineRef.current;
+    const beamHead = beamHeadRef.current;
+
+    if (!section || !timelineContainer || !track || !line || !beamHead || !isReady) return;
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const ctx = gsap.context(() => {
-      if (prefersReducedMotion) {
-        gsap.set([headerRef.current, lineRef.current, ...milestonesRef.current], {
-          opacity: 1,
-          scaleY: 1,
-          y: 0,
-        });
-        return;
-      }
-
-      // Initial state
-      gsap.set(headerRef.current, { opacity: 0, y: 30 });
-      if (lineRef.current) {
-        gsap.set(lineRef.current, { scaleY: 0, transformOrigin: 'top center' });
-      }
+    if (prefersReducedMotion) {
+      if (headerRef.current) gsap.set(headerRef.current, { opacity: 1, y: 0 });
+      line.style.height = '100%';
+      beamHead.style.display = 'none';
       milestonesRef.current.forEach((el) => {
-        if (el) gsap.set(el, { opacity: 0.25, y: 20 });
+        if (el) gsap.set(el, { opacity: 1, y: 0 });
       });
+      return;
+    }
 
-      // 1. Header reveal
-      gsap.to(headerRef.current, {
+    // 1. Header reveal
+    gsap.fromTo(
+      headerRef.current,
+      { opacity: 0, y: 30 },
+      {
         scrollTrigger: {
           trigger: section,
           start: 'top 80%',
@@ -45,69 +51,108 @@ export const JourneySection: React.FC = () => {
         y: 0,
         duration: 0.8,
         ease: 'power3.out',
-      });
+      }
+    );
 
-      // 2. Progressive line draw tied to scroll
-      if (lineRef.current) {
-        gsap.to(lineRef.current, {
-          scrollTrigger: {
-            trigger: section,
-            start: 'top 65%',
-            end: 'bottom 85%',
-            scrub: 0.5,
-          },
-          scaleY: 1,
-          ease: 'none',
-        });
+    // Initial state of milestones
+    milestonesRef.current.forEach((el, index) => {
+      if (el) gsap.set(el, { opacity: index === 0 ? 1 : 0.35, y: index === 0 ? 0 : 15 });
+    });
+
+    // 2. Physical Scroll Tracking for the Tracing Beam
+    // Uses direct getBoundingClientRect() to remain 100% immune to Hero pinning or spacers
+    const updateBeam = () => {
+      if (!timelineContainer || !track || !line || !beamHead) return;
+
+      const containerRect = timelineContainer.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      // Focus line: eye-level focal plane (~52% of viewport height)
+      const focusY = windowHeight * 0.52;
+
+      // Distance from focus line to top of container
+      const relativeY = focusY - containerRect.top;
+      const totalHeight = track.offsetHeight || (timelineContainer.offsetHeight - 48);
+
+      // Clamped progress from 0.0 to 1.0
+      const progress = Math.max(0, Math.min(1, relativeY / totalHeight));
+      const currentY = progress * totalHeight;
+
+      // Update line height smoothly
+      line.style.height = `${currentY}px`;
+
+      // Update glowing orb position (pure vertical travel, perfectly centered on line)
+      beamHead.style.transform = `translateY(${currentY}px)`;
+
+      // Orb is visible when near/inside the timeline container
+      if (relativeY > 0 && relativeY < totalHeight + 100) {
+        beamHead.style.opacity = '1';
+      } else {
+        beamHead.style.opacity = '0';
       }
 
-      // 3. Sequential activation of each milestone
+      // Activate milestone nodes and cards as the orb glides over them
       milestonesRef.current.forEach((el, index) => {
         if (!el) return;
+        const node = el.querySelector('.journey-node');
+        const dot = el.querySelector('.journey-node-dot');
+        const card = el.querySelector('.journey-card');
 
-        ScrollTrigger.create({
-          trigger: el,
-          start: 'top 75%',
-          end: 'bottom 40%',
-          onEnter: () => {
-            gsap.to(el, {
-              opacity: 1,
-              y: 0,
-              duration: 0.6,
-              ease: 'power3.out',
-            });
-            const node = el.querySelector('.journey-node');
-            const card = el.querySelector('.journey-card');
+        // Position of milestone relative to timelineContainer
+        // On desktop node is vertically centered (top-1/2); on mobile it sits at top-4
+        const isDesktop = window.innerWidth >= 1024;
+        const milestoneY = isDesktop
+          ? (el.offsetTop + el.offsetHeight / 2) - 16
+          : el.offsetTop;
+
+        if (currentY >= milestoneY - 20) {
+          gsap.to(el, { opacity: 1, y: 0, duration: 0.25, overwrite: 'auto' });
+          if (node) {
+            node.classList.add('border-emerald-400', 'bg-emerald-950/60', 'shadow-[0_0_18px_rgba(16,185,129,0.7)]');
+            node.classList.remove('border-white/20', 'bg-[#050505]');
+          }
+          if (dot) {
+            dot.classList.add('bg-emerald-400', 'shadow-[0_0_8px_#10b981]', 'scale-125');
+            dot.classList.remove('bg-white/20');
+          }
+          if (card) {
+            card.classList.add('border-emerald-500/30', 'bg-[#0c0c0c]', 'shadow-2xl');
+            card.classList.remove('border-white/[0.08]', 'bg-[#080808]');
+          }
+        } else {
+          if (index > 0) {
+            gsap.to(el, { opacity: 0.35, y: 10, duration: 0.25, overwrite: 'auto' });
             if (node) {
-              node.classList.add('border-emerald-400', 'bg-emerald-500/20');
-              node.classList.remove('border-white/20', 'bg-[#050505]');
+              node.classList.remove('border-emerald-400', 'bg-emerald-950/60', 'shadow-[0_0_18px_rgba(16,185,129,0.7)]');
+              node.classList.add('border-white/20', 'bg-[#050505]');
+            }
+            if (dot) {
+              dot.classList.remove('bg-emerald-400', 'shadow-[0_0_8px_#10b981]', 'scale-125');
+              dot.classList.add('bg-white/20');
             }
             if (card) {
-              card.classList.add('border-white/20', 'bg-[#0A0A0A]');
-              card.classList.remove('border-white/[0.06]', 'bg-[#070707]');
+              card.classList.remove('border-emerald-500/30', 'bg-[#0c0c0c]', 'shadow-2xl');
+              card.classList.add('border-white/[0.08]', 'bg-[#080808]');
             }
-          },
-          onLeaveBack: () => {
-            if (index > 0) {
-              gsap.to(el, { opacity: 0.35, duration: 0.4 });
-              const node = el.querySelector('.journey-node');
-              const card = el.querySelector('.journey-card');
-              if (node) {
-                node.classList.remove('border-emerald-400', 'bg-emerald-500/20');
-                node.classList.add('border-white/20', 'bg-[#050505]');
-              }
-              if (card) {
-                card.classList.remove('border-white/20', 'bg-[#0A0A0A]');
-                card.classList.add('border-white/[0.06]', 'bg-[#070707]');
-              }
-            }
-          },
-        });
+          }
+        }
       });
-    }, section);
+    };
 
-    return () => ctx.revert();
-  }, []);
+    // Run on scroll and every frame via GSAP ticker for ultra-smooth 60fps tracking
+    window.addEventListener('scroll', updateBeam, { passive: true });
+    window.addEventListener('resize', updateBeam, { passive: true });
+    gsap.ticker.add(updateBeam);
+
+    // Initial evaluation
+    updateBeam();
+
+    return () => {
+      window.removeEventListener('scroll', updateBeam);
+      window.removeEventListener('resize', updateBeam);
+      gsap.ticker.remove(updateBeam);
+    };
+  }, [isReady]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -126,119 +171,126 @@ export const JourneySection: React.FC = () => {
     <section
       ref={sectionRef}
       id="journey"
-      className="relative py-28 sm:py-36 px-6 sm:px-8 lg:px-12 max-w-7xl mx-auto border-t border-white/[0.06] overflow-hidden"
+      className="editorial-section"
     >
-      {/* Background Watermark Index */}
-      <div className="absolute top-12 right-6 lg:right-12 text-[100px] sm:text-[140px] font-black font-display text-white/[0.015] select-none pointer-events-none -z-10 leading-none">
-        04
-      </div>
+      <div className="editorial-container">
+        {/* Standard Editorial Section Header */}
+        <div
+          ref={headerRef}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 lg:mb-20 pb-6 border-b border-white/[0.08] gap-4"
+        >
+          <div>
+            <div className="flex items-center gap-2.5 text-xs font-mono text-[#8A8A8A] tracking-[0.2em] uppercase mb-3">
+              <span className="text-emerald-400 font-bold">04 //</span>
+              <span>TRAJECTORY</span>
+            </div>
 
-      {/* Top Header */}
-      <div
-        ref={headerRef}
-        className="flex flex-col md:flex-row md:items-end justify-between mb-16 sm:mb-24 border-b border-white/[0.06] pb-6"
-      >
-        <div>
-          <div className="flex items-center gap-3 text-xs font-mono text-[#8A8A8A] tracking-widest uppercase mb-4">
-            <span className="text-emerald-400 font-bold">04 //</span>
-            <span>ENGINEERING TRAJECTORY</span>
+            <h2 className="text-[clamp(1.85rem,5vw,3.75rem)] font-black font-display text-white tracking-tight uppercase leading-[0.92]">
+              DEVELOPER
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40">
+                JOURNEY
+              </span>
+            </h2>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black font-display text-white tracking-tight uppercase leading-[0.92]">
-            DEVELOPER
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/40">
-              JOURNEY
-            </span>
-          </h2>
+          <p className="text-xs sm:text-sm font-mono text-[#8A8A8A] max-w-sm leading-relaxed md:text-right">
+            Chronological progression from CS education to shipping full-stack mobile applications and AI systems.
+          </p>
         </div>
 
-        <p className="text-xs sm:text-sm font-mono text-[#8A8A8A] max-w-md mt-6 md:mt-0 leading-relaxed">
-          Chronological evolution from computer science foundations at SSUET to shipping full-stack mobile applications and AI products.
-        </p>
-      </div>
+        {/* Interactive Timeline Container */}
+        <div ref={timelineContainerRef} className="relative max-w-4xl mx-auto">
+          {/* Background Vertical Guide Track */}
+          <div
+            ref={trackRef}
+            className="absolute left-4 sm:left-10 lg:left-1/2 top-4 bottom-8 w-[2px] bg-white/[0.08] -translate-x-1/2 pointer-events-none"
+          />
 
-      {/* Timeline Container */}
-      <div className="relative max-w-5xl mx-auto">
-        {/* Background Vertical Guide Track */}
-        <div className="absolute left-6 sm:left-12 lg:left-1/2 top-4 bottom-8 w-[2px] bg-white/[0.06] -translate-x-1/2" />
+          {/* Dynamic Progress Line (Grows with Scroll) */}
+          <div
+            ref={lineRef}
+            className="absolute left-4 sm:left-10 lg:left-1/2 top-4 w-[2px] bg-gradient-to-b from-emerald-400 via-emerald-300 to-white -translate-x-1/2 will-change-[height] shadow-[0_0_14px_rgba(16,185,129,0.7)] z-10 origin-top pointer-events-none"
+            style={{ height: '0px' }}
+          />
 
-        {/* Dynamic Progress Line (Grows with Scroll) */}
-        <div
-          ref={lineRef}
-          className="absolute left-6 sm:left-12 lg:left-1/2 top-4 bottom-8 w-[2px] bg-gradient-to-b from-emerald-400 via-emerald-300 to-white/40 -translate-x-1/2 will-change-transform shadow-[0_0_12px_rgba(16,185,129,0.5)]"
-        />
+          {/* Traveling Glowing Beam Head (Scroll-driven Orb with Radiant Aura) */}
+          <div
+            ref={beamHeadRef}
+            className="absolute left-4 sm:left-10 lg:left-1/2 top-4 z-30 pointer-events-none w-0 h-0 flex items-center justify-center will-change-transform transition-opacity duration-150"
+            style={{ opacity: 0 }}
+          >
+            {/* Outer Radiant Glow / Halo matching Lightswind Reference */}
+            <div className="absolute w-12 h-12 rounded-full bg-emerald-400/35 blur-md animate-pulse pointer-events-none" />
+            <div className="absolute w-6 h-6 rounded-full bg-emerald-300/40 blur-xs pointer-events-none" />
+            
+            {/* Core Orb */}
+            <div className="relative w-4 h-4 rounded-full bg-white border-2 border-emerald-400 shadow-[0_0_16px_#10b981,0_0_30px_rgba(16,185,129,0.8)] flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            </div>
+          </div>
 
-        {/* Milestones List */}
-        <div className="space-y-12 sm:space-y-20 relative z-10">
-          {JOURNEY_MILESTONES.map((item, index) => {
-            const isEven = index % 2 === 0;
+          {/* Milestones List */}
+          <div className="space-y-10 sm:space-y-14 lg:space-y-16 relative z-10">
+            {JOURNEY_MILESTONES.map((item, index) => {
+              const isEven = index % 2 === 0;
 
-            return (
-              <div
-                key={item.year}
-                ref={(el) => {
-                  milestonesRef.current[index] = el;
-                }}
-                className={`relative flex flex-col lg:flex-row items-start lg:items-center gap-6 sm:gap-10 transition-all duration-300 ${
-                  isEven ? 'lg:flex-row-reverse' : ''
-                }`}
-              >
-                {/* Center Node Marker */}
-                <div className="absolute left-6 sm:left-12 lg:left-1/2 top-1.5 sm:top-1/2 -translate-x-1/2 lg:-translate-y-1/2 z-20">
-                  <div className="journey-node w-5 h-5 rounded-full border-2 border-white/20 bg-[#050505] transition-all duration-300 flex items-center justify-center shadow-lg">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  </div>
-                </div>
-
-                {/* Left/Right Milestone Content Card */}
+              return (
                 <div
-                  className={`w-full lg:w-[calc(50%-3rem)] ml-14 sm:ml-24 lg:ml-0 ${
-                    isEven ? 'lg:text-left' : 'lg:text-left'
+                  key={item.year}
+                  ref={(el) => {
+                    milestonesRef.current[index] = el;
+                  }}
+                  className={`relative flex flex-col lg:flex-row items-start lg:items-center gap-6 sm:gap-10 transition-all duration-300 ${
+                    isEven ? 'lg:flex-row-reverse' : ''
                   }`}
                 >
-                  <div className="journey-card p-6 sm:p-8 rounded-2xl bg-[#070707] border border-white/[0.06] transition-all duration-300 hover:border-emerald-500/30 shadow-xl group">
-                    
-                    {/* Year & Category Header */}
-                    <div className="flex items-center justify-between gap-3 mb-3 text-xs font-mono">
-                      <div className="flex items-center gap-2 text-emerald-400">
-                        {getCategoryIcon(item.category)}
-                        <span className="font-bold tracking-widest text-sm">{item.year}</span>
-                      </div>
-
-                      <span className="px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-[10px] text-[#8A8A8A] font-mono tracking-wider">
-                        {item.category}
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="text-xl sm:text-2xl font-bold font-display text-white mb-3 tracking-tight group-hover:text-emerald-300 transition-colors">
-                      {item.title}
-                    </h3>
-
-                    {/* Narrative Description */}
-                    <p className="text-xs sm:text-sm text-[#8A8A8A] leading-relaxed font-light">
-                      {item.description}
-                    </p>
-
-                    {/* Subtle Corner Marker */}
-                    <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between text-[10px] font-mono text-[#525252]">
-                      <span>STAGE 0{index + 1}</span>
-                      <span className="flex items-center gap-1 text-emerald-400/80">
-                        <Terminal className="w-3 h-3" />
-                        <span>VERIFIED</span>
-                      </span>
+                  {/* Center Node Marker */}
+                  <div className="absolute left-4 sm:left-10 lg:left-1/2 top-4 sm:top-1/2 -translate-x-1/2 lg:-translate-y-1/2 z-20">
+                    <div className="journey-node w-5 h-5 rounded-full border-2 border-white/20 bg-[#050505] transition-all duration-300 flex items-center justify-center shadow-lg">
+                      <div className="w-2 h-2 rounded-full bg-white/20 transition-all duration-300 journey-node-dot" />
                     </div>
                   </div>
-                </div>
 
-                {/* Spacer for opposite side on Desktop */}
-                <div className="hidden lg:block lg:w-[calc(50%-3rem)]" />
-              </div>
-            );
-          })}
+                  {/* Left/Right Milestone Content Card */}
+                  <div
+                    className={`w-full lg:w-[calc(50%-2.5rem)] ml-8 sm:ml-16 lg:ml-0`}
+                  >
+                    <div className="journey-card p-4 sm:p-7 rounded-2xl bg-[#080808] border border-white/[0.08] transition-all duration-300 hover:border-emerald-500/30 shadow-xl group">
+                      {/* Year & Category Header */}
+                      <div className="flex items-center justify-between gap-3 mb-2.5 text-xs font-mono">
+                        <div className="flex items-center gap-2 text-emerald-400">
+                          {getCategoryIcon(item.category)}
+                          <span className="font-bold tracking-widest text-sm">{item.year}</span>
+                        </div>
+
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-white/[0.04] text-[#8A8A8A] font-mono tracking-wider">
+                          {item.category}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h3 className="text-lg sm:text-xl font-bold font-display text-white mb-2.5 tracking-tight group-hover:text-emerald-300 transition-colors">
+                        {item.title}
+                      </h3>
+
+                      {/* Narrative Description */}
+                      <p className="text-xs sm:text-sm text-[#8A8A8A] leading-relaxed font-light">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Spacer for opposite side on Desktop */}
+                  <div className="hidden lg:block lg:w-[calc(50%-2.5rem)]" />
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
   );
 };
+
+
